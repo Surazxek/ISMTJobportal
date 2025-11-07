@@ -15,9 +15,8 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 export default function App() {
   const [user, setUser] = useState(null);
 
-  // simple user loader example, could improve with real auth check on backend
   useEffect(() => {
-    // You may call backend /me or similar endpoint to get user info
+    // Load user info from backend if needed
   }, []);
 
   return (
@@ -30,7 +29,7 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/apply/:jobId" element={<ApplyPage />} />
 
-        {/* Recruiter/Admin Protected Routes */}
+        {/* Protected routes for recruiters/admins */}
         <Route
           path="/post-job"
           element={
@@ -40,7 +39,7 @@ export default function App() {
           }
         />
         <Route
-          path="/edit-job/:jobId"
+          path="/edit-job/:id"
           element={
             <ProtectedRoute user={user} roles={["recruiter", "admin"]}>
               <EditJob />

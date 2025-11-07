@@ -1,6 +1,8 @@
 import express from "express";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
 import {
+  deleteJob,
+  editJob,
   getAdminJobs,
   getAllJobs,
   getJobById,
@@ -10,7 +12,10 @@ import {
 const router = express.Router();
 
 // CREATE a new job
+// router.post("/post", isAuthenticated, postJob);
 router.post("/post", isAuthenticated, postJob);
+
+
 
 // GET all jobs
 router.get("/get", isAuthenticated, getAllJobs);
@@ -20,6 +25,10 @@ router.get("/getadminjobs", isAuthenticated, getAdminJobs);
 
 // GET job by ID
 router.get("/get/:id", isAuthenticated, getJobById);
+
+router.put("/edit/:id", isAuthenticated, editJob);
+router.delete("/delete/:id", isAuthenticated, deleteJob);
+
 
 
 export default router;

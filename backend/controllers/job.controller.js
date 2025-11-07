@@ -1,41 +1,82 @@
 import { Job } from "../models/job.model.js";
 
 
-
-
-
 export const postJob = async (req, res) => {
-    try {
-        const { title, description, requirements, salary, location, jobType, experience, position, companyId } = req.body;
-        const userId = req.id;
+  try {
+    const {
+      title, description, requirements, salary,
+      location, jobType, experience, position, companyId
+    } = req.body;
 
-        if (!title || !description || !requirements || !salary || !location || !jobType || !experience || !position || !companyId) {
-            return res.status(400).json({
-                message: "Somethin is missing.",
-                success: false
-            })
-        };
-        const job = await Job.create({
-            title,
-            description,
-            requirements: requirements.split(","),
-            salary: Number(salary),
-            location,
-            jobType,
-            experienceLevel: experience,
-            position,
-            company: companyId,
-            created_by: userId
-        });
-        return res.status(201).json({
-            message: "New job created successfully.",
-            job,
-            success: true
-        });
-    } catch (error) {
-        console.log(error);
+    const userId = req.id; // should come from your auth middleware
+
+    // Validate required fields
+    if (!title || !description || !requirements || !salary ||
+        !location || !jobType || !experience || !position || !companyId) {
+      return res.status(400).json({
+        message: "Something is missing.",
+        success: false
+      });
     }
-}
+
+    // Create job
+    const job = await Job.create({
+      title,
+      description,
+      requirements: requirements.split(","),
+      salary: Number(salary),
+      location,
+      jobType,
+      experienceLevel: experience,
+      position,
+      company: companyId,
+      created_by: userId
+    });
+
+    return res.status(201).json({
+      message: "New job created successfully.",
+      job,
+      success: true
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+};
+
+
+// export const postJob = async (req, res) => {
+//     try {
+//         const { title, description, requirements, salary, location, jobType, experience, position, companyId } = req.body;
+//         const userId = req.id;
+
+//         if (!title || !description || !requirements || !salary || !location || !jobType || !experience || !position || !companyId) {
+//             return res.status(400).json({
+//                 message: "Somethin is missing.",
+//                 success: false
+//             })
+//         };
+//         const job = await Job.create({
+//             title,
+//             description,
+//             requirements: requirements.split(","),
+//             salary: Number(salary),
+//             location,
+//             jobType,
+//             experienceLevel: experience,
+//             position,
+//             company: companyId,
+//             created_by: userId
+//         });
+//         return res.status(201).json({
+//             message: "New job created successfully.",
+//             job,
+//             success: true
+//         });
+//     } catch (error) {
+//         console.log(error);
+//     }
+// }
 // 
 export const getAllJobs = async (req, res) => {
     try {
@@ -101,3 +142,45 @@ export const getAdminJobs = async (req, res) => {
         console.log(error);
     }
 }
+
+
+// Edit job controller
+export const editJob = async (req, res) => {
+  const jobId = req.params.id;
+  const userId = req.id;
+  try {
+    const job = await Job.findById(jobId);
+    if (!job) return res.status(404).json({ message: "Job not found" });
+
+    if (job.created_by.toString() !== userId) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // Update fields from req.body (add validation as needed)
+    Object.assign(job, req.body);
+    await job.save();
+
+    res.json({ success: true, job });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Delete job controller
+export const deleteJob = async (req, res) => {
+  const jobId = req.params.id;
+  const userId = req.id;
+  try {
+    const job = await Job.findById(jobId);
+    if (!job) return res.status(404).json({ message: "Job not found" });
+
+    if (job.created_by.toString() !== userId) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    await job.remove();
+    res.json({ success: true, message: "Job deleted" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

@@ -1,46 +1,102 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminJobs() {
   const [jobs, setJobs] = useState([]);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const fetchJobs = () => {
-    fetch("http://localhost:8000/api/v1/job/get", {credentials: "include"})
-      .then(res => res.json())
-      .then(data => setJobs(data.jobs || []));
+  // Load jobs posted by recruiter
+  const loadJobs = async () => {
+    try {
+      const res = await fetch("http://localhost:8000/api/v1/job/getadminjobs", {
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        setError("Failed to load jobs");
+        return;
+      }
+
+      const data = await res.json();
+      if (data.success) {
+        setJobs(data.jobs);
+        setError("");
+      } else {
+        setError(data.message || "Failed to load jobs");
+      }
+    } catch (err) {
+      setError("Error loading jobs");
+      console.error(err);
+    }
   };
 
   useEffect(() => {
-    fetchJobs();
+    loadJobs();
   }, []);
 
-  const handleDelete = async (jobId) => {
-    if(!window.confirm("Are you sure to delete this job?")) return;
-    const res = await fetch(`http://localhost:8000/api/v1/job/deletejob/${jobId}`, {
-      method: "DELETE",
-      credentials: "include"
-    });
-    const data = await res.json();
-    if(data.success) fetchJobs();
-    else alert(data.message);
+  // Delete job handler
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this job?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:8000/api/v1/job/delete/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        alert("Failed to delete job");
+        return;
+      }
+
+      const data = await res.json();
+      if (data.success) {
+        alert("Job deleted successfully");
+        loadJobs(); // refresh list
+      } else {
+        alert(data.message || "Failed to delete job");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting job");
+    }
   };
 
+  // Render job list with Edit & Delete buttons
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white rounded shadow mt-10">
-      <h2 className="text-2xl font-bold mb-6">Manage Jobs</h2>
-      {jobs.length === 0 && <p>No jobs found</p>}
-      {jobs.map(job => (
-        <div key={job._id} className="border rounded p-4 mb-4 flex justify-between items-center">
-          <div>
-            <h3 className="font-bold">{job.title}</h3>
-            <p>{job.location}</p>
-          </div>
-          <div>
-            <Link to={`/edit-job/${job._id}`} className="text-blue-600 mr-4 hover:underline">Edit</Link>
-            <button className="text-red-600" onClick={() => handleDelete(job._id)}>Delete</button>
-          </div>
-        </div>
-      ))}
+    <div className="max-w-4xl mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-6">Manage Jobs</h1>
+      {error && <p className="text-red-600 mb-4">{error}</p>}
+      {jobs.length === 0 ? (
+        <p>You have not posted any jobs yet.</p>
+      ) : (
+        <ul>
+          {jobs.map((job) => (
+            <li key={job._id} className="border p-4 rounded mb-4 shadow flex justify-between items-center">
+              <div>
+                <h2 className="font-semibold">{job.title}</h2>
+                <p>{job.description}</p>
+                <p className="text-sm text-gray-600">Location: {job.location}</p>
+              </div>
+              <div className="space-x-2">
+                <button
+                  onClick={() => navigate(`/edit-job/${job._id}`)}
+                  className="bg-yellow-400 text-white px-4 py-2 rounded"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(job._id)}
+                  className="bg-red-600 text-white px-4 py-2 rounded"
+                >
+                  Delete
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
