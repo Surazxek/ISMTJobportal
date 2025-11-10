@@ -170,12 +170,15 @@ export const editJob = async (req, res) => {
 export const deleteJob = async (req, res) => {
   const jobId = req.params.id;
   const userId = req.id;
+  const userRole = req.role; // get from auth middleware
+
   try {
     const job = await Job.findById(jobId);
     if (!job) return res.status(404).json({ message: "Job not found" });
 
-    if (job.created_by.toString() !== userId) {
-      return res.status(403).json({ message: "Not authorized" });
+    // Only admin can delete, recruiters cannot
+    if (userRole !== "admin") {
+      return res.status(403).json({ message: "Not authorized to delete jobs" });
     }
 
     await job.remove();
