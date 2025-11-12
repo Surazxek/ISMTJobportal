@@ -1,4 +1,5 @@
 import express from "express";
+import isRecruiter from "../middlewares/isRecuiter.js";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
 import {
   deleteJob,
@@ -8,6 +9,7 @@ import {
   getJobById,
   postJob
 } from "../controllers/job.controller.js";
+
 
 const router = express.Router();
 
@@ -27,7 +29,7 @@ router.get("/getadminjobs", isAuthenticated, getAdminJobs);
 router.get("/get/:id", isAuthenticated, getJobById);
 
 router.put("/edit/:id", isAuthenticated, editJob);
-router.delete("/delete/:id", isAuthenticated, deleteJob);
+router.delete("/delete/:id", isAuthenticated, isRecruiter, deleteJob);
 
 
 
