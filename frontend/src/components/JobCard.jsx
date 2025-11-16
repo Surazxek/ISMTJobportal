@@ -8,6 +8,7 @@ export default function JobCard({ job }) {
         <p className="text-gray-700 mb-1">{job.description}</p>
         <span className="text-sm text-gray-500 block mb-3">{job.location}</span>
       </div>
+      
       <Link
         to={`/apply/${job._id}`}
         className="mt-auto inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-center"

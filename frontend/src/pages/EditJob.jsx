@@ -80,19 +80,120 @@ export default function EditJob() {
     }
   };
 
+  // 🗑️ DELETE FUNCTION
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this job?")) return;
+    try {
+      const res = await fetch(`http://localhost:8000/api/v1/job/delete/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        setMsg("Failed to delete job");
+        return;
+      }
+      const data = await res.json();
+      if (data.success) {
+        setMsg("Job deleted successfully!");
+        setTimeout(() => navigate("/admin-jobs"), 1000);
+      } else {
+        setMsg(data.message || "Job deletion failed");
+      }
+    } catch {
+      setMsg("Error deleting job");
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="max-w-md mx-auto p-6 bg-white rounded shadow mt-10 grid gap-4">
+    <form
+      onSubmit={handleSubmit}
+      className="max-w-md mx-auto p-6 bg-white rounded shadow mt-10 grid gap-4"
+    >
       <h2 className="text-2xl font-bold mb-4">Edit Job</h2>
-      <input name="title" placeholder="Job Title" value={fields.title} onChange={handleChange} required />
-      <textarea name="description" placeholder="Description" value={fields.description} onChange={handleChange} required />
-      <input name="requirements" placeholder="Requirements (comma separated)" value={fields.requirements} onChange={handleChange} required />
-      <input name="salary" type="number" placeholder="Salary" value={fields.salary} onChange={handleChange} required />
-      <input name="location" placeholder="Location" value={fields.location} onChange={handleChange} required />
-      <input name="jobType" placeholder="Job Type" value={fields.jobType} onChange={handleChange} required />
-      <input name="experience" type="number" placeholder="Experience Level" value={fields.experience} onChange={handleChange} required />
-      <input name="position" type="number" placeholder="Position" value={fields.position} onChange={handleChange} required />
-      <input name="companyName" placeholder="Company Name" value={fields.companyName} onChange={handleChange} required />
-      <button type="submit" className="bg-blue-600 text-white py-2 rounded">Update Job</button>
+
+      <input
+        name="title"
+        placeholder="Job Title"
+        value={fields.title}
+        onChange={handleChange}
+        required
+      />
+      <textarea
+        name="description"
+        placeholder="Description"
+        value={fields.description}
+        onChange={handleChange}
+        required
+      />
+      <input
+        name="requirements"
+        placeholder="Requirements (comma separated)"
+        value={fields.requirements}
+        onChange={handleChange}
+        required
+      />
+      <input
+        name="salary"
+        type="number"
+        placeholder="Salary"
+        value={fields.salary}
+        onChange={handleChange}
+        required
+      />
+      <input
+        name="location"
+        placeholder="Location"
+        value={fields.location}
+        onChange={handleChange}
+        required
+      />
+      <input
+        name="jobType"
+        placeholder="Job Type"
+        value={fields.jobType}
+        onChange={handleChange}
+        required
+      />
+      <input
+        name="experience"
+        type="number"
+        placeholder="Experience Level"
+        value={fields.experience}
+        onChange={handleChange}
+        required
+      />
+      <input
+        name="position"
+        type="number"
+        placeholder="Position"
+        value={fields.position}
+        onChange={handleChange}
+        required
+      />
+      <input
+        name="companyName"
+        placeholder="Company Name"
+        value={fields.companyName}
+        onChange={handleChange}
+        required
+      />
+
+      <div className="flex justify-between mt-4">
+        <button
+          type="submit"
+          className="bg-blue-600 text-white py-2 px-4 rounded"
+        >
+          Update Job
+        </button>
+        <button
+          type="button"
+          onClick={handleDelete}
+          className="bg-red-600 text-white py-2 px-4 rounded"
+        >
+          Delete Job
+        </button>
+      </div>
+
       {msg && <p className="mt-2 text-red-600">{msg}</p>}
     </form>
   );

@@ -1,21 +1,36 @@
 import { Job } from "../models/job.model.js";
 
-
 export const postJob = async (req, res) => {
   try {
     const {
-      title, description, requirements, salary,
-      location, jobType, experience, position, companyId
+      title,
+      description,
+      requirements,
+      salary,
+      location,
+      jobType,
+      experience,
+      position,
+      companyId,
     } = req.body;
 
     const userId = req.id; // should come from your auth middleware
 
     // Validate required fields
-    if (!title || !description || !requirements || !salary ||
-        !location || !jobType || !experience || !position || !companyId) {
+    if (
+      !title ||
+      !description ||
+      !requirements ||
+      !salary ||
+      !location ||
+      !jobType ||
+      !experience ||
+      !position ||
+      !companyId
+    ) {
       return res.status(400).json({
         message: "Something is missing.",
-        success: false
+        success: false,
       });
     }
 
@@ -30,20 +45,19 @@ export const postJob = async (req, res) => {
       experienceLevel: experience,
       position,
       company: companyId,
-      created_by: userId
+      created_by: userId,
     });
 
     return res.status(201).json({
       message: "New job created successfully.",
       job,
-      success: true
+      success: true,
     });
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, message: "Server error." });
   }
 };
-
 
 // export const postJob = async (req, res) => {
 //     try {
@@ -77,33 +91,35 @@ export const postJob = async (req, res) => {
 //         console.log(error);
 //     }
 // }
-// 
+//
 export const getAllJobs = async (req, res) => {
-    try {
-        const keyword = req.query.keyword || "";
-        const query = {
-            $or: [
-                { title: { $regex: keyword, $options: "i" } },
-                { description: { $regex: keyword, $options: "i" } },
-            ]
-        };
-        const jobs = await Job.find(query).populate({
-            path: "company"
-        }).sort({ createdAt: -1 });
-        if (!jobs) {
-            return res.status(404).json({
-                message: "Jobs not found.",
-                success: false
-            })
-        };
-        return res.status(200).json({
-            jobs,
-            success: true
-        })
-    } catch (error) {
-        console.log(error);
+  try {
+    const keyword = req.query.keyword || "";
+    const query = {
+      $or: [
+        { title: { $regex: keyword, $options: "i" } },
+        { description: { $regex: keyword, $options: "i" } },
+      ],
+    };
+    const jobs = await Job.find(query)
+      .populate({
+        path: "company",
+      })
+      .sort({ createdAt: -1 });
+    if (!jobs) {
+      return res.status(404).json({
+        message: "Jobs not found.",
+        success: false,
+      });
     }
-}
+    return res.status(200).json({
+      jobs,
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 // student
 export const getJobById = async (req, res) => {
   try {
@@ -112,7 +128,7 @@ export const getJobById = async (req, res) => {
     if (!job) {
       return res.status(404).json({
         message: "Jobs not found.",
-        success: false
+        success: false,
       });
     }
     return res.status(200).json({ job, success: true });
@@ -122,27 +138,26 @@ export const getJobById = async (req, res) => {
 };
 
 export const getAdminJobs = async (req, res) => {
-    try {
-        const adminId = req.id;
-        const jobs = await Job.find({ created_by: adminId }).populate({
-            path:'company',
-            createdAt:-1
-        });
-        if (!jobs) {
-            return res.status(404).json({
-                message: "Jobs not found.",
-                success: false
-            })
-        };
-        return res.status(200).json({
-            jobs,
-            success: true
-        })
-    } catch (error) {
-        console.log(error);
+  try {
+    const adminId = req.id;
+    const jobs = await Job.find({ created_by: adminId }).populate({
+      path: "company",
+      createdAt: -1,
+    });
+    if (!jobs) {
+      return res.status(404).json({
+        message: "Jobs not found.",
+        success: false,
+      });
     }
-}
-
+    return res.status(200).json({
+      jobs,
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 // Edit job controller
 export const editJob = async (req, res) => {
@@ -168,26 +183,42 @@ export const editJob = async (req, res) => {
 
 // Delete job controller
 export const deleteJob = async (req, res) => {
-  const jobId = req.params.id;
-  const userId = req.id; 
-  const userRole = req.role;
-
   try {
+    const jobId = req.params.id;
+    const userId = req.id;
+    const userRole = req.role;
+
     const job = await Job.findById(jobId);
-    if (!job) return res.status(404).json({ message: "Job not found" });
-
-    if (userRole !== "recruiter") {
-      return res.status(403).json({ message: "Not authorized to delete jobs" });
+    if (!job) {
+      return res.status(404).json({ success: false, message: "Job not found" });
     }
 
-    // Check if recruiter actually created the job
-    if (job.created_by.toString() !== userId) {
-      return res.status(403).json({ message: "You can only delete your own jobs" });
+    // Recruiter can delete only their own job
+    if (userRole === "recruiter") {
+      if (job.created_by.toString() !== userId) {
+        return res
+          .status(403)
+          .json({
+            success: false,
+            message: "You can delete only your own job",
+          });
+      }
+    }
+    // Admin can delete any job
+    else if (userRole !== "admin") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorized to delete jobs" });
     }
 
-    await job.remove();
-    res.json({ success: true, message: "Job deleted" });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    await Job.findByIdAndDelete(jobId);
+    return res
+      .status(200)
+      .json({ success: true, message: "Job deleted successfully" });
+  } catch (error) {
+    console.error("Delete Job Error:", error.message);
+    res
+      .status(500)
+      .json({ success: false, message: "Server error deleting job" });
   }
 };

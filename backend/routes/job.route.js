@@ -29,7 +29,7 @@ router.get("/getadminjobs", isAuthenticated, getAdminJobs);
 router.get("/get/:id", isAuthenticated, getJobById);
 
 router.put("/edit/:id", isAuthenticated, editJob);
-router.delete("/delete/:id", isAuthenticated, isRecruiter, deleteJob);
+router.delete("/delete/:id", isAuthenticated, deleteJob);
 
 
 
